@@ -1,0 +1,25 @@
+* Motor Driver PCB - one current-sense channel (R1 + U2A; R2 + U2B is identical)
+* Low-side shunt on DRV8833 AISEN, read by an LM358 difference amplifier.
+* Values are PLACEHOLDERS: the schematic labels the resistors only as "R" / "R_Shunt".
+* The op-amp is a behavioural stand-in clamped to the LM358 output swing; swap in a
+* vendor LM358 model (.include) for anything beyond a first-order check.
+
+.param Rshunt=0.1 Rin=10k Rf=100k VCC=5
+
+* Motor current pulled from the AISEN node through the shunt to GND
+Imotor  0 isen DC 0
+Rsh     isen 0 {Rshunt}
+
+* Difference amplifier: (+) senses the shunt top, (-) senses the shunt ground (Kelvin)
+Rin_p   isen inp {Rin}
+Rref    inp  0   {Rf}
+Rin_n   0    inn {Rin}
+Rfb     inn  out {Rf}
+
+* Behavioural op-amp: high open-loop gain, output limited to 0.02 V .. VCC-1.5 V
+Eamp    amp_raw 0 inp inn 1e5
+Bclamp  out 0 V = max(0.02, min(V(amp_raw), {VCC}-1.5))
+
+.dc Imotor 0 2 0.05
+.print dc V(isen) V(out)
+.end
